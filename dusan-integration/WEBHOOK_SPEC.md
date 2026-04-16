@@ -2,7 +2,7 @@
 
 ## Endpoint
 ```
-POST https://wibiz-widget-production.up.railway.app/api/propfunded/webhook
+POST https://widget.wibiz.ai/api/propfunded/webhook
 ```
 
 ## Headers
