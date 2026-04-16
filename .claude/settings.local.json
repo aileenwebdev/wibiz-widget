@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 *)",
+      "Bash(npm --version)",
+      "Bash(gh --version)",
+      "Bash(railway --version)",
+      "Bash(npm install *)",
+      "Bash(JWT_SECRET=test_secret_for_ci WIBIZ_API_KEY=test_api_key PORT=4999 node src/index.js)",
+      "Bash(curl -s http://localhost:4999/health)",
+      "Bash(curl -s -X POST http://localhost:4999/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"jane@example.com\",\"password\":\"password123\"}')",
+      "Bash(curl -s http://localhost:4999/api/wibiz/subscriber/usr_001 -H 'Authorization: Bearer test_api_key')",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(gh repo *)",
+      "Bash(railway login *)",
+      "Bash(railway whoami *)",
+      "Bash(railway init *)",
+      "Bash(railway list *)",
+      "Bash(railway up *)",
+      "Bash(railway variables *)",
+      "Bash(openssl rand *)",
+      "Bash(railway service *)",
+      "Bash(railway domain *)",
+      "Bash(curl -s -X GET https://services.leadconnectorhq.com/locations/xLDiBULkjcNNk3isq7L4 -H 'Authorization: Bearer pit-9a9e4b42-0699-4cc5-80b0-a7e2752edab7' -H 'Version: 2021-07-28')",
+      "Bash(curl *)",
+      "Bash(git push *)"
+    ]
+  }
+}

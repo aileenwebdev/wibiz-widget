@@ -43,7 +43,7 @@ back-and-forth, we process it directly.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `subscriber_id` | string | yes | Your primary key |
-| `email` | string | yes | Used to match/create GHL contact |
+| `email` | string | yes | Used to match/create Wibiz contact |
 | `full_name` | string | yes | |
 | `status` | string | yes | e.g. `active`, `suspended`, `trial` |
 | `account_created` | string | yes | ISO date — `YYYY-MM-DD` |
@@ -53,7 +53,7 @@ back-and-forth, we process it directly.
 | `amount_spent` | number | no | Total amount spent |
 
 ## Our response
-We acknowledge immediately with HTTP 200 — the GHL sync runs in the background.
+We acknowledge immediately with HTTP 200 — the Wibiz sync runs in the background.
 ```json
 { "received": true, "subscriber_id": "abc123" }
 ```

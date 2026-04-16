@@ -59,7 +59,7 @@ router.post("/webhook", validateSecret, async (req, res) => {
     res.json({ received: true, subscriber_id: data.subscriber_id, mode: "full" });
 
     upsertSubscriber(data).catch((err) =>
-      console.error(`[webhook] GHL upsert failed for ${data.subscriber_id}: ${err.message}`)
+      console.error(`[webhook] Wibiz upsert failed for ${data.subscriber_id}: ${err.message}`)
     );
     return;
   }

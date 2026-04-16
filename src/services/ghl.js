@@ -1,5 +1,5 @@
 /**
- * GoHighLevel API v2 client.
+ * Wibiz CRM client.
  * Handles contact create / update and tag management for Propfunded subscribers.
  */
 
@@ -8,7 +8,7 @@ const https = require("https");
 const GHL_BASE = "https://services.leadconnectorhq.com";
 const GHL_VERSION = "2021-07-28";
 
-// Custom field IDs created in the PropFunded AI GHL location (xLDiBULkjcNNk3isq7L4)
+// Custom field IDs in the PropFunded AI Wibiz location (xLDiBULkjcNNk3isq7L4)
 const FIELD_IDS = {
   propfunded_subscriber_id:  "vDme5bN5feL0TEEN0CLy",
   propfunded_status:         "Obn3YeqDweq6egkvns9v",
@@ -58,7 +58,7 @@ function ghlRequest(method, path, body) {
 }
 
 // ---------------------------------------------------------------------------
-// Build the GHL contact payload from a Propfunded subscriber record
+// Build the Wibiz contact payload from a Propfunded subscriber record
 // ---------------------------------------------------------------------------
 function buildContactPayload(subscriber) {
   const nameParts = (subscriber.full_name || "").trim().split(/\s+/);
@@ -114,7 +114,7 @@ function buildContactPayload(subscriber) {
 }
 
 // ---------------------------------------------------------------------------
-// Find an existing GHL contact by email
+// Find an existing Wibiz contact by email
 // ---------------------------------------------------------------------------
 async function findContactByEmail(email) {
   const res = await ghlRequest(
@@ -126,29 +126,29 @@ async function findContactByEmail(email) {
 }
 
 // ---------------------------------------------------------------------------
-// Create a new GHL contact
+// Create a new Wibiz contact
 // ---------------------------------------------------------------------------
 async function createContact(payload) {
   const res = await ghlRequest("POST", "/contacts/", payload);
   if (res.status !== 200 && res.status !== 201) {
-    throw new Error(`GHL create failed (${res.status}): ${JSON.stringify(res.body)}`);
+    throw new Error(`Wibiz contact create failed (${res.status}): ${JSON.stringify(res.body)}`);
   }
   return res.body.contact;
 }
 
 // ---------------------------------------------------------------------------
-// Update an existing GHL contact
+// Update an existing Wibiz contact
 // ---------------------------------------------------------------------------
 async function updateContact(contactId, payload) {
   const res = await ghlRequest("PUT", `/contacts/${contactId}`, payload);
   if (res.status !== 200) {
-    throw new Error(`GHL update failed (${res.status}): ${JSON.stringify(res.body)}`);
+    throw new Error(`Wibiz contact update failed (${res.status}): ${JSON.stringify(res.body)}`);
   }
   return res.body.contact;
 }
 
 // ---------------------------------------------------------------------------
-// Upsert a single Propfunded subscriber into GHL
+// Upsert a single Propfunded subscriber into Wibiz
 // Returns: { action: 'created'|'updated', contactId }
 // ---------------------------------------------------------------------------
 async function upsertSubscriber(subscriber) {

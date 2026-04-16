@@ -1,10 +1,10 @@
 /**
- * Propfunded → GHL sync service.
+ * Propfunded → Wibiz sync service.
  *
  * Two modes:
  *   fullSync()   – pages through ALL subscribers from Propfunded's bulk endpoint
- *                  and upserts each one into GHL. Run once at startup and on demand.
- *   syncOne(id)  – fetches a single subscriber by ID and upserts into GHL.
+ *                  and upserts each one into Wibiz. Run once at startup and on demand.
+ *   syncOne(id)  – fetches a single subscriber by ID and upserts into Wibiz.
  *                  Called from the webhook receiver when Propfunded sends a change event.
  */
 
@@ -78,7 +78,7 @@ async function processBatch(subscribers) {
 // Full bulk sync — pages through all subscribers
 // ---------------------------------------------------------------------------
 async function fullSync() {
-  console.log("[sync] Starting full Propfunded → GHL sync…");
+  console.log("[sync] Starting full Propfunded → Wibiz sync…");
   const totals = { created: 0, updated: 0, errors: 0, pages: 0 };
   let page = 0;
   let hasMore = true;
@@ -131,7 +131,7 @@ async function syncOne(subscriberId) {
   }
 
   const result = await upsertSubscriber(res.body);
-  console.log(`[sync] ${result.action} GHL contact ${result.contactId} for subscriber ${subscriberId}`);
+  console.log(`[sync] ${result.action} Wibiz contact ${result.contactId} for subscriber ${subscriberId}`);
   return result;
 }
 
