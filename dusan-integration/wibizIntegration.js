@@ -6,25 +6,25 @@
  * SETUP (2 steps):
  *
  * 1. Add to your .env:
- *      WIBIZ_API_KEY=<the key you agreed with Wibiz>
+ *      WIBIZ_API_KEY=<key agreed with Wibiz — keep this secret>
  *
- * 2. In your main app.js / server.js, add:
+ * 2. In your main app.js / server.js add:
  *      const wibiz = require('./routes/wibizIntegration');
  *      app.use('/api/wibiz', wibiz);
  *
- * That's it. No new service, no new database, no new dependencies.
+ * ── CONFIRM THESE BEFORE DEPLOYING ──────────────────────────────────────────
+ * Lines marked /* confirm: ... */ may need to match your actual table/column
+ * names. Everything else is based on what you already shared with us.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const express = require('express');
 const router  = express.Router();
 
-// Use your existing pg Pool — import it however your project exposes it.
-// Example: const pool = require('../db');
-// ↓ TODO: replace this line with how you import your pg Pool
-const pool = require('../db');
+// Import your existing pg Pool — adjust the path to match your project
+const pool = require('../db'); /* confirm: path to your pg pool */
 
-// ─── Auth middleware ──────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 function auth(req, res, next) {
   const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
   if (!token || token !== process.env.WIBIZ_API_KEY) {
@@ -34,49 +34,45 @@ function auth(req, res, next) {
 }
 
 // ─── GET /api/wibiz/subscriber/:id ───────────────────────────────────────────
-// Returns a single subscriber's current data. Called by Wibiz mid-conversation.
+// Single subscriber — called by the Wibiz chatbot mid-conversation
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/subscriber/:id', auth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `
       SELECT
-        s.<TODO: subscriber id column>         AS subscriber_id,
-        s.<TODO: email column>                 AS email,
-        s.<TODO: full name column>             AS full_name,
-        s.<TODO: status column>                AS status,
-        s.<TODO: created at column>            AS account_created,
+        s.subscriberId                           AS subscriber_id,
+        s.full_name,
+        s.account_status                         AS status,
+        s.account_created,
 
-        -- Most recent challenge only (stage / funded / balance)
-        c.<TODO: stage column>                 AS current_stage,
-        c.<TODO: is funded column>             AS is_funded,
-        c.<TODO: balance column>               AS balance,
+        -- Most recent active challenge
+        c.stage                                  AS current_stage,
+        c.is_funded,
+        c.balance,
 
-        -- Total amount spent across all payments
-        COALESCE(p.total_spent, 0)             AS amount_spent
+        -- Total amount spent
+        COALESCE(p.total_spent, 0)               AS amount_spent
 
-      FROM <TODO: subscribers table> s
+      FROM users s                               /* confirm: subscribers table name */
 
-      -- Most recent challenge
+      -- Most recent challenge for this subscriber
       LEFT JOIN LATERAL (
-        SELECT
-          <TODO: stage column>,
-          <TODO: is funded column>,
-          <TODO: balance column>
-        FROM <TODO: challenges table>
-        WHERE <TODO: challenge subscriber fk> = s.<TODO: subscriber id column>
-        ORDER BY <TODO: challenge created at column> DESC
+        SELECT stage, is_funded, balance
+        FROM challenges                          /* confirm: challenges/evaluations table name */
+        WHERE subscriber_id = s.subscriberId    /* confirm: foreign key column name */
+        ORDER BY created_at DESC
         LIMIT 1
       ) c ON true
 
-      -- Total spend
+      -- Sum of all payments
       LEFT JOIN LATERAL (
-        SELECT COALESCE(SUM(<TODO: payment amount column>), 0) AS total_spent
-        FROM <TODO: payments table>
-        WHERE <TODO: payment subscriber fk> = s.<TODO: subscriber id column>
+        SELECT COALESCE(SUM(amount), 0) AS total_spent
+        FROM payments                            /* confirm: payments/orders/transactions table name */
+        WHERE subscriber_id = s.subscriberId    /* confirm: foreign key column name */
       ) p ON true
 
-      WHERE s.<TODO: subscriber id column> = $1
+      WHERE s.subscriberId = $1
       `,
       [req.params.id]
     );
@@ -93,11 +89,10 @@ router.get('/subscriber/:id', auth, async (req, res) => {
 });
 
 // ─── GET /api/wibiz/subscribers?page=0&limit=100 ─────────────────────────────
-// Paginated list of all subscribers. Used for the initial bulk sync and the
-// 15-minute background sync on Wibiz's side.
+// Paginated list — used by the Wibiz bulk sync (runs every 15 min)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/subscribers', auth, async (req, res) => {
-  const limit  = Math.min(parseInt(req.query.limit)  || 100, 100);
+  const limit  = Math.min(parseInt(req.query.limit) || 100, 100);
   const offset = (parseInt(req.query.page) || 0) * limit;
 
   try {
@@ -105,43 +100,39 @@ router.get('/subscribers', auth, async (req, res) => {
       pool.query(
         `
         SELECT
-          s.<TODO: subscriber id column>         AS subscriber_id,
-          s.<TODO: email column>                 AS email,
-          s.<TODO: full name column>             AS full_name,
-          s.<TODO: status column>                AS status,
-          s.<TODO: created at column>            AS account_created,
+          s.subscriberId                         AS subscriber_id,
+          s.full_name,
+          s.account_status                       AS status,
+          s.account_created,
 
-          c.<TODO: stage column>                 AS current_stage,
-          c.<TODO: is funded column>             AS is_funded,
-          c.<TODO: balance column>               AS balance,
+          c.stage                                AS current_stage,
+          c.is_funded,
+          c.balance,
 
           COALESCE(p.total_spent, 0)             AS amount_spent
 
-        FROM <TODO: subscribers table> s
+        FROM users s                             /* confirm: subscribers table name */
 
         LEFT JOIN LATERAL (
-          SELECT
-            <TODO: stage column>,
-            <TODO: is funded column>,
-            <TODO: balance column>
-          FROM <TODO: challenges table>
-          WHERE <TODO: challenge subscriber fk> = s.<TODO: subscriber id column>
-          ORDER BY <TODO: challenge created at column> DESC
+          SELECT stage, is_funded, balance
+          FROM challenges                        /* confirm: challenges table name */
+          WHERE subscriber_id = s.subscriberId  /* confirm: foreign key column name */
+          ORDER BY created_at DESC
           LIMIT 1
         ) c ON true
 
         LEFT JOIN LATERAL (
-          SELECT COALESCE(SUM(<TODO: payment amount column>), 0) AS total_spent
-          FROM <TODO: payments table>
-          WHERE <TODO: payment subscriber fk> = s.<TODO: subscriber id column>
+          SELECT COALESCE(SUM(amount), 0) AS total_spent
+          FROM payments                          /* confirm: payments table name */
+          WHERE subscriber_id = s.subscriberId  /* confirm: foreign key column name */
         ) p ON true
 
-        ORDER BY s.<TODO: subscriber id column>
+        ORDER BY s.subscriberId
         LIMIT $1 OFFSET $2
         `,
         [limit, offset]
       ),
-      pool.query(`SELECT COUNT(*) FROM <TODO: subscribers table>`),
+      pool.query(`SELECT COUNT(*) FROM users`), /* confirm: subscribers table name */
     ]);
 
     res.json({
