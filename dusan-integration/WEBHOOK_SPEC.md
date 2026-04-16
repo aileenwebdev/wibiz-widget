@@ -1,4 +1,4 @@
-# Wibiz Webhook Spec — What to Send Us
+# Wibiz Webhook Spec
 
 ## Endpoint
 ```
@@ -11,58 +11,95 @@ Content-Type: application/json
 X-Propfunded-Secret: fdc59d6bb359dd7e34b81e9d6218d28e056233df
 ```
 
-## Payload
+---
 
-Send the full subscriber data in the `data` object — this way there's no
-back-and-forth, we process it directly.
+## Supported events
 
+Send your existing event payloads as-is — no changes to your format needed.
+
+### user.welcome
 ```json
-{
-  "event": "subscriber.updated",
-  "data": {
-    "subscriber_id": "abc123",
-    "email": "jane@example.com",
-    "full_name": "Jane Doe",
-    "status": "active",
-    "account_created": "2024-01-15",
-    "current_stage": "Phase 2",
-    "is_funded": false,
-    "balance": 9800.00,
-    "amount_spent": 299.00
-  }
-}
+{ "event": "user.welcome", "subscriber_id": "user_id", "email": "string", "first_name": "string" }
 ```
 
-### `event` values
-| Value | When to fire |
-|---|---|
-| `subscriber.created` | New subscriber signs up |
-| `subscriber.updated` | Any field changes (status, stage, balance, funded, etc.) |
-
-### `data` fields
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `subscriber_id` | string | yes | Your primary key |
-| `email` | string | yes | Used to match/create Wibiz contact |
-| `full_name` | string | yes | |
-| `status` | string | yes | e.g. `active`, `suspended`, `trial` |
-| `account_created` | string | yes | ISO date — `YYYY-MM-DD` |
-| `current_stage` | string | no | e.g. `Phase 1`, `Phase 2`, `Funded` |
-| `is_funded` | boolean | no | `true` / `false` |
-| `balance` | number | no | Current account balance |
-| `amount_spent` | number | no | Total amount spent |
-
-## Our response
-We acknowledge immediately with HTTP 200 — the Wibiz sync runs in the background.
+### user.password_reset_requested
 ```json
-{ "received": true, "subscriber_id": "abc123" }
+{ "event": "user.password_reset_requested", "subscriber_id": "user_id", "email": "string", "first_name": "string", "reset_link": "string" }
 ```
 
-## Initial sync of existing subscribers
-For the ~6k existing subscribers, you can either:
-- **Option A (easiest):** Fire the webhook above for each existing subscriber in
-  a batch (no rate limit on our end for the initial load)
-- **Option B:** Provide a paginated `GET /api/wibiz/subscribers?page=0&limit=100`
-  endpoint and we'll pull them ourselves
+### purchase.confirmed
+```json
+{ "event": "purchase.confirmed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "amount": "number", "currency": "string", "tx_hash": "string" }
+```
 
-Let us know which works better for you.
+### challenge.free_granted
+```json
+{ "event": "challenge.free_granted", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "reason": "string" }
+```
+
+### challenge.phase1.completed
+```json
+{ "event": "challenge.phase1.completed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string", "profit": "number", "equity": "number" }
+```
+
+### challenge.phase2.completed
+```json
+{ "event": "challenge.phase2.completed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string", "profit": "number", "equity": "number" }
+```
+
+### challenge.phase1.failed
+```json
+{ "event": "challenge.phase1.failed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string", "reason": "string" }
+```
+
+### challenge.phase2.failed
+```json
+{ "event": "challenge.phase2.failed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string", "reason": "string" }
+```
+
+### challenge.phase3.failed
+```json
+{ "event": "challenge.phase3.failed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string", "reason": "string" }
+```
+
+### withdrawal.approved
+```json
+{ "event": "withdrawal.approved", "subscriber_id": "user_id", "email": "string", "first_name": "string", "amount": "number", "currency": "string" }
+```
+
+### withdrawal.rejected
+```json
+{ "event": "withdrawal.rejected", "subscriber_id": "user_id", "email": "string", "first_name": "string", "amount": "number", "currency": "string", "reason": "string" }
+```
+
+### withdrawal.completed
+```json
+{ "event": "withdrawal.completed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "amount": "number", "currency": "string", "tx_hash": "string" }
+```
+
+---
+
+## Response
+We always respond immediately with HTTP 200. The sync runs in the background.
+```json
+{ "received": true, "event": "challenge.phase1.completed", "subscriber_id": "abc123" }
+```
+
+---
+
+## What happens on our end per event
+
+| Event | Wibiz stage set | Tags added |
+|---|---|---|
+| user.welcome | Registered | status:active, stage:registered |
+| purchase.confirmed | Phase 1 | stage:phase1, purchase:confirmed |
+| challenge.free_granted | Phase 1 | stage:phase1, challenge:free_granted |
+| challenge.phase1.completed | Phase 2 | stage:phase2, phase1:passed |
+| challenge.phase2.completed | Funded | stage:funded, phase2:passed, funded:yes |
+| challenge.phase1.failed | Phase 1 Failed | phase1:failed |
+| challenge.phase2.failed | Phase 2 Failed | phase2:failed |
+| challenge.phase3.failed | Phase 3 Failed | phase3:failed |
+| withdrawal.approved | — | withdrawal:approved |
+| withdrawal.rejected | — | withdrawal:rejected |
+| withdrawal.completed | — | withdrawal:completed |
+| user.password_reset_requested | — | — |
