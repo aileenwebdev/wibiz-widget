@@ -10,10 +10,15 @@ const GHL_VERSION = "2021-07-28";
 
 // Custom field IDs created in the PropFunded AI GHL location (xLDiBULkjcNNk3isq7L4)
 const FIELD_IDS = {
-  propfunded_subscriber_id: "vDme5bN5feL0TEEN0CLy",
-  propfunded_status:        "Obn3YeqDweq6egkvns9v",
-  propfunded_account_created: "BfBouzZUpZJ4G5ttqFd5",
-  propfunded_last_synced:   "73NvX05Rj1flTpfnGHhv",
+  propfunded_subscriber_id:  "vDme5bN5feL0TEEN0CLy",
+  propfunded_status:         "Obn3YeqDweq6egkvns9v",
+  propfunded_account_created:"BfBouzZUpZJ4G5ttqFd5",
+  propfunded_last_synced:    "73NvX05Rj1flTpfnGHhv",
+  // Extended fields — added after Propfunded confirmed availability
+  propfunded_amount_spent:   "ol2Z5oruK0sOZFAHqjeG",
+  propfunded_current_stage:  "l6ICD1zruM098mBHDfjB",
+  propfunded_is_funded:      "I1pWigU00DAELdMqTyEN",
+  propfunded_balance:        "ZV3HsOfmWJJDvJVv1oql",
 };
 
 // ---------------------------------------------------------------------------
@@ -75,9 +80,35 @@ function buildContactPayload(subscriber) {
     });
   }
 
-  // Tags: status-based (status:active, status:trial, status:suspended …)
+  // Extended fields — only set if Propfunded sends them
+  if (subscriber.amount_spent != null) {
+    customFields.push({ id: FIELD_IDS.propfunded_amount_spent, value: String(subscriber.amount_spent) });
+  }
+  if (subscriber.current_stage != null) {
+    // If multiple challenges, Propfunded sends comma-separated string or array
+    const stage = Array.isArray(subscriber.current_stage)
+      ? subscriber.current_stage.join(", ")
+      : String(subscriber.current_stage);
+    customFields.push({ id: FIELD_IDS.propfunded_current_stage, value: stage });
+  }
+  if (subscriber.is_funded != null) {
+    customFields.push({ id: FIELD_IDS.propfunded_is_funded, value: subscriber.is_funded ? "yes" : "no" });
+  }
+  if (subscriber.balance != null) {
+    customFields.push({ id: FIELD_IDS.propfunded_balance, value: String(subscriber.balance) });
+  }
+
+  // Tags: status + funded state for campaign segmentation
   const tags = [];
   if (subscriber.status) tags.push(`status:${subscriber.status.toLowerCase()}`);
+  if (subscriber.is_funded === true)  tags.push("funded:yes");
+  if (subscriber.is_funded === false) tags.push("funded:no");
+  if (subscriber.current_stage) {
+    const stages = Array.isArray(subscriber.current_stage)
+      ? subscriber.current_stage
+      : [subscriber.current_stage];
+    stages.forEach((s) => tags.push(`stage:${s.toLowerCase().replace(/\s+/g, "_")}`));
+  }
 
   return { firstName, lastName, email: subscriber.email, locationId: process.env.GHL_LOCATION_ID, customFields, tags };
 }
