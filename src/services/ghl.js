@@ -155,7 +155,8 @@ async function createContact(payload) {
 // Update an existing Wibiz contact
 // ---------------------------------------------------------------------------
 async function updateContact(contactId, payload) {
-  const res = await ghlRequest("PUT", `/contacts/${contactId}`, payload);
+  const { locationId: _removed, ...updatePayload } = payload;
+  const res = await ghlRequest("PUT", `/contacts/${contactId}`, updatePayload);
   if (res.status !== 200) {
     throw new Error(`Wibiz contact update failed (${res.status}): ${JSON.stringify(res.body)}`);
   }
