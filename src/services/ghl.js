@@ -47,7 +47,7 @@ const EVENT_MAP = {
   "withdrawal.approved":            { label: "Withdrawal Approved",          stage: null,             tags: ["withdrawal:approved"] },
   "withdrawal.rejected":            { label: "Withdrawal Rejected",          stage: null,             tags: ["withdrawal:rejected"] },
   "withdrawal.completed":           { label: "Withdrawal Completed",         stage: null,             tags: ["withdrawal:completed"] },
-  "user.password_reset_requested":  { label: "Password Reset Requested",     stage: null,             tags: [] },
+  "user.password_reset_requested":  { label: "Password Reset Requested",     stage: null,             tags: ["user:password_reset_requested"] },
 };
 
 // ---------------------------------------------------------------------------
