@@ -28,6 +28,7 @@ const FIELD_IDS = {
   propfunded_equity:           "DKqCzi5pwADl3LQUWYaE",
   propfunded_withdrawal_amount:"wS4TgPccgi4jHopFc1jg",
   propfunded_fail_reason:      "Wv5AFWAyUW13vu3X7ZS3",
+  propfunded_reset_link:       "B5tBsp2Myr5Wwpr2Wckq",
 };
 
 // ---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ function buildContactFromEvent(event, payload) {
   const {
     subscriber_id, email, first_name,
     challenge_name, account_number,
-    profit, equity, amount, reason,
+    profit, equity, amount, reason, reset_link,
   } = payload;
 
   const config = EVENT_MAP[event] || { label: event, stage: null, tags: [] };
@@ -117,7 +118,8 @@ function buildContactFromEvent(event, payload) {
   if (amount  != null && event === "purchase.confirmed") {
     customFields.push({ id: FIELD_IDS.propfunded_amount_spent, value: String(amount) });
   }
-  if (reason) customFields.push({ id: FIELD_IDS.propfunded_fail_reason, value: reason });
+  if (reason)     customFields.push({ id: FIELD_IDS.propfunded_fail_reason, value: reason });
+  if (reset_link) customFields.push({ id: FIELD_IDS.propfunded_reset_link, value: reset_link });
 
   return {
     firstName:  first_name || "",
