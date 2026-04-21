@@ -77,6 +77,11 @@ Send your existing event payloads as-is — no changes to your format needed.
 { "event": "withdrawal.completed", "subscriber_id": "user_id", "email": "string", "first_name": "string", "amount": "number", "currency": "string", "tx_hash": "string" }
 ```
 
+### challenge.soft_breach
+```json
+{ "event": "challenge.soft_breach", "subscriber_id": "user_id", "email": "string", "first_name": "string", "challenge_name": "string", "account_number": "string" }
+```
+
 ---
 
 ## Response
@@ -103,3 +108,4 @@ We always respond immediately with HTTP 200. The sync runs in the background.
 | withdrawal.rejected | — | withdrawal:rejected |
 | withdrawal.completed | — | withdrawal:completed |
 | user.password_reset_requested | — | — |
+| challenge.soft_breach | — | soft_breach:warning |

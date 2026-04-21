@@ -48,6 +48,7 @@ const EVENT_MAP = {
   "withdrawal.rejected":            { label: "Withdrawal Rejected",          stage: null,             tags: ["withdrawal:rejected"] },
   "withdrawal.completed":           { label: "Withdrawal Completed",         stage: null,             tags: ["withdrawal:completed"] },
   "user.password_reset_requested":  { label: "Password Reset Requested",     stage: null,             tags: ["user:password_reset_requested"] },
+  "challenge.soft_breach":          { label: "Soft Breach Warning",           stage: null,             tags: ["soft_breach:warning"] },
 };
 
 // ---------------------------------------------------------------------------

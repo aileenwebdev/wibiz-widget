@@ -17,6 +17,7 @@
  *   withdrawal.approved
  *   withdrawal.rejected
  *   withdrawal.completed
+ *   challenge.soft_breach
  *
  * Payload format (flat — no wrapper):
  * {
