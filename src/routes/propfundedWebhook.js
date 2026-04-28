@@ -33,6 +33,7 @@
 
 const express = require("express");
 const { upsertFromEvent, EVENT_MAP } = require("../services/ghl");
+const { record } = require("../services/webhookLog");
 
 const router = express.Router();
 
@@ -60,9 +61,15 @@ router.post("/webhook", validateSecret, (req, res) => {
   // Acknowledge immediately — Wibiz sync runs in the background
   res.json({ received: true, event, subscriber_id });
 
-  upsertFromEvent(event, req.body).catch((err) =>
-    console.error(`[webhook] Wibiz upsert failed — event: ${event}, subscriber: ${subscriber_id}: ${err.message}`)
-  );
+  upsertFromEvent(event, req.body)
+    .then((result) => {
+      console.log(`[webhook] OK — event: ${event}, subscriber: ${subscriber_id}, email: ${email}, action: ${result.action}`);
+      record({ event, subscriber_id, email, status: "ok", action: result.action });
+    })
+    .catch((err) => {
+      console.error(`[webhook] FAILED — event: ${event}, subscriber: ${subscriber_id}, email: ${email}: ${err.message}`);
+      record({ event, subscriber_id, email, status: "failed", error: err.message });
+    });
 });
 
 module.exports = router;

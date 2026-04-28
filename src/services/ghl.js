@@ -208,12 +208,27 @@ async function upsertSubscriber(subscriber) {
 }
 
 // ---------------------------------------------------------------------------
+// Delete specific tags from a GHL contact using the dedicated tags endpoint.
+// This is explicit (not a PUT replace/merge) so other tags on the contact
+// are always preserved.
+// ---------------------------------------------------------------------------
+async function deleteContactTags(contactId, tags) {
+  await ghlRequest("DELETE", `/contacts/${contactId}/tags`, { tags });
+}
+
+// ---------------------------------------------------------------------------
 // Upsert a Propfunded subscriber from an event payload
 // ---------------------------------------------------------------------------
 async function upsertFromEvent(event, payload) {
   const contactPayload = buildContactFromEvent(event, payload);
   const existing = await findContactByEmail(payload.email);
   if (existing) {
+    // Delete the event tags first so GHL sees them as freshly "added" when
+    // the update re-applies them — guarantees automations fire on repeat events
+    // (e.g. a trader soft-breached a second time who already had the tag).
+    if (contactPayload.tags?.length) {
+      await deleteContactTags(existing.id, contactPayload.tags);
+    }
     await updateContact(existing.id, contactPayload);
     return { action: "updated", contactId: existing.id };
   }
@@ -221,4 +236,12 @@ async function upsertFromEvent(event, payload) {
   return { action: "created", contactId: created.id };
 }
 
-module.exports = { upsertSubscriber, upsertFromEvent, EVENT_MAP };
+// ---------------------------------------------------------------------------
+// Fetch a single GHL contact by ID (used by admin endpoint)
+// ---------------------------------------------------------------------------
+async function getContactById(contactId) {
+  const res = await ghlRequest("GET", `/contacts/${contactId}`);
+  return res.body?.contact || null;
+}
+
+module.exports = { upsertSubscriber, upsertFromEvent, findContactByEmail, getContactById, EVENT_MAP };

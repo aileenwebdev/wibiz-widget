@@ -5,6 +5,8 @@
 
 const express = require("express");
 const { fullSync } = require("../services/propfundedSync");
+const { getEntries } = require("../services/webhookLog");
+const { findContactByEmail, getContactById } = require("../services/ghl");
 
 const router = express.Router();
 
@@ -42,6 +44,35 @@ router.post("/sync", adminAuth, async (req, res) => {
 // GET /api/admin/sync/status — check last sync result
 router.get("/sync/status", adminAuth, (_req, res) => {
   res.json(syncStatus);
+});
+
+// GET /api/admin/webhook/log — last 100 webhook events (newest first)
+// Shows event name, subscriber, email, whether GHL sync succeeded, and any error.
+router.get("/webhook/log", adminAuth, (_req, res) => {
+  res.json({ entries: getEntries() });
+});
+
+// GET /api/admin/contact?email=... — look up a GHL contact by email
+// Returns their current tags and custom fields so you can verify what landed in GHL.
+router.get("/contact", adminAuth, async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Missing email query param." });
+
+  try {
+    const contact = await findContactByEmail(email);
+    if (!contact) return res.status(404).json({ error: "Contact not found in GHL." });
+
+    const full = await getContactById(contact.id);
+    res.json({
+      id:           full.id,
+      email:        full.email,
+      firstName:    full.firstName,
+      tags:         full.tags || [],
+      customFields: full.customFields || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
